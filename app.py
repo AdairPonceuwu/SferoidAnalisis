@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -9,42 +10,70 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
 
 #Cargar archivos
-def seleccionar_archivo():
-    # Abrir un cuadro de diálogo para seleccionar el archivo
-    archivo = filedialog.askopenfilename(
-        title="Selecciona un archivo CSV",
-        filetypes=[("Archivos CSV", "*.csv")]
-    )
-    
-    if archivo:
-        try:
-            # Leer el archivo CSV
-            df = pd.read_csv(archivo)
-            messagebox.showinfo("Éxito", "Archivo cargado correctamente.")
-            
-            # Aquí puedes continuar con el resto de la ejecución de tu simulación
-            simulacion(df)
-        
-        except Exception as e:
-            messagebox.showerror("Error", f"No se pudo leer el archivo:\n{e}")
-    else:
-        messagebox.showwarning("Advertencia", "No se seleccionó ningún archivo.")
+import pandas as pd
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+def centrar_ventana(ventana):
+    # Obtener el ancho y alto de la ventana
+    ventana.update_idletasks()  # Asegurarse de que la ventana está actualizada
+    ancho_ventana = ventana.winfo_width()
+    alto_ventana = ventana.winfo_height()
+
+    # Obtener el tamaño de la pantalla
+    ancho_pantalla = ventana.winfo_screenwidth()
+    alto_pantalla = ventana.winfo_screenheight()
+
+    # Calcular la posición para centrar la ventana
+    x = (ancho_pantalla // 2) - (ancho_ventana // 2)
+    y = (alto_pantalla // 2) - (alto_ventana // 2)
+
+    # Configurar la geometría de la ventana para centrarla
+    ventana.geometry(f"+{x}+{y}")
+
+
+#Variables Globales
+df = None
+
+# Función para seleccionar y cargar archivo
+def main():
+    # Crear la ventana para seleccionar archivo
+    ventana_carga = tk.Tk()
+    ventana_carga.title("Carga de Archivos")
+    ventana_carga.geometry("350x150")  # Aumentar tamaño de la ventana
+    centrar_ventana(ventana_carga)
+
+    def seleccionar_archivo():
+        global df  # Declarar la variable df como global para usarla fuera de esta función
+        # Seleccionar archivo usando el diálogo de selección de archivos
+        archivo = filedialog.askopenfilename(filetypes=[("Archivos CSV", "*.csv")])
+        if archivo:
+            try:
+                # Leer el archivo CSV usando pandas
+                df = pd.read_csv(archivo)
+                messagebox.showinfo("Éxito", f"Archivo cargado exitosamente")
+                ventana_carga.destroy()  # Cerrar la ventana de carga si se selecciona un archivo
+                simulacion(df)  # Llamar a la función para abrir la ventana de simulación
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo cargar el archivo: {str(e)}")
+        else:
+            messagebox.showwarning("Advertencia", "No se seleccionó ningún archivo.")
+
+    # Crear botón para seleccionar archivo
+    boton_cargar = tk.Button(ventana_carga, text="Seleccionar archivo", command=seleccionar_archivo)
+    boton_cargar.pack(pady=20)
+
+    # Crear botón de salida
+    boton_salir = tk.Button(ventana_carga, text="Salir", command=ventana_carga.destroy)
+    boton_salir.pack(pady=10)
+
+    ventana_carga.mainloop()
 
 def simulacion(df):
-    # Aquí coloca el código de tu simulación o procesamiento de datos.
-    print("Ejecutando simulación...")
-
-    # Configuración de la ventana principal de tkinter
-    root = tk.Tk()
-    root.title("Selector de Archivos para Simulación")
-
-    # Crear un botón para seleccionar el archivo
-    boton_seleccionar = tk.Button(root, text="Seleccionar Archivo CSV", command=seleccionar_archivo)
-    boton_seleccionar.pack(pady=20)
-
-    # Ejecutar el bucle de eventos de tkinter
-    root.mainloop()
-  
+    
+    global current_index
+    current_index = 0  # Inicializar la variable global current_index
+    
     X = df.iloc[:, 1:15] 
 
     ######
@@ -87,7 +116,7 @@ def simulacion(df):
     #####
     # Crear la ventana principal
     root = tk.Tk()
-    root.title("Animacion crecimiento de 24 a 168 hrs")
+    root.title("Simulacion crecimiento de 24 a 168 hrs")
 
     # Crear la figura y el eje 3D
     fig = plt.Figure()
@@ -164,11 +193,6 @@ def simulacion(df):
         num_cells = 15 + 15 * index  # 15, 30, 45, 60, 75, 90, 105
         cell_colors, theta_cells, phi_cells, r_cells_initial = initialize_cells(num_cells)
         
-        # Inicializar las posiciones de las células
-        x_cells_initial = r_cells_initial * np.sin(phi_cells) * np.cos(theta_cells)
-        y_cells_initial = r_cells_initial * np.sin(phi_cells) * np.sin(theta_cells)
-        z_cells_initial = r_cells_initial * np.cos(phi_cells)
-        
         # Parámetros para la forma elipsoidal de las minicélulas
         elongation_factor_x = 1.5  # Alarga en el eje x
         elongation_factor_y = 0.5  # Contrae en el eje y
@@ -228,8 +252,8 @@ def simulacion(df):
         # Actualizar el texto con el estado actual
         instructions.config(text=f"""Muestra a la hora: {t} hrs
         \nAncho: {a:.2f}, Largo: {c:.2f}
-        \nVolumen((4/3)pi*(a^2)*c): {(0.5)*a*a*c:.2f}
-        \nVolumen2.0(Volumen/10^7): {(0.5*a*a*c)/100000000}
+        \nVolumen((4/3)pi*(a^2)*c): {(0.5)*a*a*c:.3f}
+        \nVolumen2.0(Volumen/10^7): {(0.5*a*a*c)/100000000:.3f}
         \nUsa la flecha derecha para mostrar el siguiente crecimiento
         \nUsa la flecha izquierda para mostrar el crecimiento anterior""")
         number_label.config(text=f"Estado: {index + 1}/7")
@@ -256,3 +280,6 @@ def simulacion(df):
 
     # Iniciar el bucle de eventos de Tkinter
     root.mainloop()
+    
+if __name__ == "__main__":
+    main()
