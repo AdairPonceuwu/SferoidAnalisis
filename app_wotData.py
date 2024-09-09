@@ -1,111 +1,12 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
-from tkinter import filedialog, messagebox
 
-from sklearn.model_selection import GridSearchCV
-from sklearn.neighbors import KernelDensity
-
-def centrar_ventana(ventana):
-    # Obtener el ancho y alto de la ventana
-    ventana.update_idletasks()  # Asegurarse de que la ventana está actualizada
-    ancho_ventana = ventana.winfo_width()
-    alto_ventana = ventana.winfo_height()
-
-    # Obtener el tamaño de la pantalla
-    ancho_pantalla = ventana.winfo_screenwidth()
-    alto_pantalla = ventana.winfo_screenheight()
-
-    # Calcular la posición para centrar la ventana
-    x = (ancho_pantalla // 2) - (ancho_ventana // 2)
-    y = (alto_pantalla // 2) - (alto_ventana // 2)
-
-    # Configurar la geometría de la ventana para centrarla
-    ventana.geometry(f"+{x}+{y}")
-
-
-#Variables Globales
-df = None
-
-# Función para seleccionar y cargar archivo
-def main():
-    # Crear la ventana para seleccionar archivo
-    ventana_carga = tk.Tk()
-    ventana_carga.title("Carga de Archivos")
-    ventana_carga.geometry("350x150")  # Aumentar tamaño de la ventana
-    centrar_ventana(ventana_carga)
-
-    def seleccionar_archivo():
-        global df  # Declarar la variable df como global para usarla fuera de esta función
-        # Seleccionar archivo usando el diálogo de selección de archivos
-        archivo = filedialog.askopenfilename(filetypes=[("Archivos CSV", "*.csv")])
-        if archivo:
-            try:
-                # Leer el archivo CSV usando pandas
-                df = pd.read_csv(archivo)
-                messagebox.showinfo("Éxito", f"Archivo cargado exitosamente")
-                ventana_carga.destroy()  # Cerrar la ventana de carga si se selecciona un archivo
-                simulacion(df)  # Llamar a la función para abrir la ventana de simulación
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudo cargar el archivo: {str(e)}")
-        else:
-            messagebox.showwarning("Advertencia", "No se seleccionó ningún archivo.")
-
-    # Crear botón para seleccionar archivo
-    boton_cargar = tk.Button(ventana_carga, text="Seleccionar archivo", command=seleccionar_archivo)
-    boton_cargar.pack(pady=20)
-
-    # Crear botón de salida
-    boton_salir = tk.Button(ventana_carga, text="Salir", command=ventana_carga.destroy)
-    boton_salir.pack(pady=10)
-
-    ventana_carga.mainloop()
-
-def simulacion(df):
+def simulacion():
     
     global current_index
     current_index = 0  # Inicializar la variable global current_index
-    
-    X = df.iloc[:, 1:15] 
-
-    ######
-    #Entrenamos el modelo
-    # Definir un rango de valores de bandwidth para buscar
-    params = {'bandwidth': np.linspace(0.1, 1.0, 30)}
-
-    #Definimos una semilla para no variar los valores en ejecuciones
-    np.random.seed(365)
-
-    # Crear el modelo KernelDensity
-    kde = KernelDensity(kernel='gaussian')
-
-    # Configurar la búsqueda en cuadrícula con CV(5 folds)
-    grid = GridSearchCV(kde, params, cv=5, n_jobs=-1)
-
-    # Ajustar el modelo a los datos
-    grid.fit(X)
-
-    # Evaluar el modelo utilizando el mejor bandwidth
-    kde_best = grid.best_estimator_
-
-    #####
-    #Creamos nuevos valores
-    kde_best.fit(X)
-
-    new_samples = kde_best.sample(5)
-
-    df_new_samples = pd.DataFrame(new_samples, columns=X.columns)
-
-    #####
-    #Obtenemos los valores de una prueba
-    columns_largos = ['Largo_24','Largo_48','Largo_72','Largo_96','Largo_120', 'Largo_144', 'Largo_168']
-    columns_anchos = ['Ancho_24','Ancho_48','Ancho_72','Ancho_96','Ancho_120', 'Ancho_144', 'Ancho_168']
-
-    #Obtenemos los valores de la primera muestra generada con Kernel
-    largos = df_new_samples[columns_largos].iloc[0].values
-    anchos = df_new_samples[columns_anchos].iloc[0].values
 
     #####
     # Crear la ventana principal
@@ -118,13 +19,13 @@ def simulacion(df):
 
     # Definir los parámetros para las 7 esferas
     params = [
-        {'t': 24, 'c': largos[0], 'a': anchos[0]},
-        {'t': 48, 'c': largos[1], 'a': anchos[1]},
-        {'t': 72, 'c': largos[2], 'a': anchos[2]},
-        {'t': 96, 'c': largos[3], 'a': anchos[3]},
-        {'t': 120, 'c': anchos[4], 'a': largos[4]},
-        {'t': 144, 'c': anchos[5], 'a': largos[5]},
-        {'t': 168, 'c': anchos[6], 'a': largos[6]}
+        {'t': 24, 'c': 620.47, 'a': 597.00},
+        {'t': 48, 'c': 627.56 , 'a': 593.19},
+        {'t': 72, 'c': 672.44 , 'a': 612.85},
+        {'t': 96, 'c': 757.51 , 'a': 722.11},
+        {'t': 120, 'c': 796.05 , 'a': 792.48 },
+        {'t': 144, 'c': 834.88 , 'a': 815.81 },
+        {'t': 168, 'c': 957.14 , 'a': 852.44 }
     ]
 
     # Crear una esfera que representa la célula del asteroide
@@ -276,4 +177,4 @@ def simulacion(df):
     root.mainloop()
     
 if __name__ == "__main__":
-    main()
+    simulacion()
