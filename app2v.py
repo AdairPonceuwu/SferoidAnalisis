@@ -2,8 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import tkinter as tk
+from tkinter import messagebox
 
-# Definir los parámetros para las 7 esferas
+def centrar_ventana(ventana):
+    # Obtener el ancho y alto de la ventana
+    ventana.update_idletasks()  # Asegurarse de que la ventana está actualizada
+    ancho_ventana = ventana.winfo_width()
+    alto_ventana = ventana.winfo_height()
+
+    # Obtener el tamaño de la pantalla
+    ancho_pantalla = ventana.winfo_screenwidth()
+    alto_pantalla = ventana.winfo_screenheight()
+
+    # Calcular la posición para centrar la ventana
+    x = (ancho_pantalla // 2) - (ancho_ventana // 2)
+    y = (alto_pantalla // 2) - (alto_ventana // 2)
+
+    # Configurar la geometría de la ventana para centrarla
+    ventana.geometry(f"+{x}+{y}")
+
+# Definir los parámetros predeterminados para la simulacion
 params = [
         {'t': 24, 'c': 620.47, 'a': 597.00},
         {'t': 48, 'c': 627.56 , 'a': 593.19},
@@ -13,6 +31,8 @@ params = [
         {'t': 144, 'c': 834.88 , 'a': 815.81 },
         {'t': 168, 'c': 957.14 , 'a': 852.44 }
     ]
+
+valores_guardados = False #Bandera para mostrar la simulacion
 
 def solicitar_valores():
     # Crear la ventana principal
@@ -25,11 +45,24 @@ def solicitar_valores():
 
     # Función para guardar los valores ingresados y cerrar la ventana
     def guardar_valores():
+    # Verificar si todas las entradas están llenas
+        for i in range(7):
+            if not entradas_c[i].get().strip() or not entradas_a[i].get().strip():
+                messagebox.showwarning("Advertencia", "Todos los campos deben ser completados antes de continuar.")
+                return  # No continuar si hay un campo vacío
+            
         for i in range(7):
             params[i]['c'] = float(entradas_c[i].get())
             params[i]['a'] = float(entradas_a[i].get())
+        global valores_guardados 
+        valores_guardados = True# Indicar que los valores han sido guardados
         ventana.destroy()
         
+    # Función para limpiar todas las entradas
+    def limpiar_valores():
+        for entrada in entradas_c + entradas_a:
+            entrada.delete(0, tk.END)  # Elimina todo el texto en la entrada
+            
     # Encabezados de la tabla
     tk.Label(ventana, text="Muestra a las:").grid(row=0, column=0)
     tk.Label(ventana, text="Anchos (a):").grid(row=0, column=1)
@@ -54,12 +87,9 @@ def solicitar_valores():
 
     # Botón para guardar y cerrar
     tk.Button(ventana, text="Guardar y continuar", command=guardar_valores).grid(row=9, columnspan=5)
-
+    tk.Button(ventana, text="Limpiar valores", command=limpiar_valores).grid(row=10, columnspan=5)
+    centrar_ventana(ventana)
     ventana.mainloop()
-
-# Llamada a la función para solicitar los valores
-solicitar_valores()
-
 
 def simulacion():
     
@@ -69,7 +99,7 @@ def simulacion():
     #####
     # Crear la ventana principal
     root = tk.Tk()
-    root.title("Simulacion crecimiento de 24 a 168 hrs")
+    root.title("Simulador crecimiento celular de 24 a 168 hrs")
 
     # Crear la figura y el eje 3D
     fig = plt.Figure()
@@ -224,4 +254,12 @@ def simulacion():
     root.mainloop()
     
 if __name__ == "__main__":
-    simulacion()
+    
+    # Llamada a la función para solicitar los valores
+    solicitar_valores()
+    
+    #Cargar la simulacion
+    if valores_guardados:
+        simulacion()
+    else: 
+        pass
