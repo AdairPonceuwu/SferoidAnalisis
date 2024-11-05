@@ -245,6 +245,16 @@ def simulacion():
 
         # Ajustar el ángulo de visión
         ax.view_init(elev=20., azim=30)
+        
+        # Agregar la leyenda fuera del gráfico
+        # Crear círculos para la leyenda con colores personalizados
+        purple_patch = mpatches.Patch(color='purple', label='Esferoide construido')
+        blue_patch = mpatches.Patch(color='blue', label='Células vivas')
+        orange_patch = mpatches.Patch(color='orange', label='Células en espera')
+        gray_patch = mpatches.Patch(color='black', label='Células muertas')
+        
+        # Agregar la leyenda con los círculos
+        ax.legend(handles=[purple_patch,blue_patch, orange_patch, gray_patch], loc='upper left', fontsize='small')
 
         # Actualizar el canvas de tkinter
         canvas.draw()
